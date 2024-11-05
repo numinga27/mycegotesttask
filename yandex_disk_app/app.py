@@ -1,6 +1,6 @@
 from flask import session
 from flask import Flask, render_template, request, redirect, url_for, send_file
-from urllib.parse import quote
+from urllib.parse import urlencode
 import requests
 import os
 import httpx
@@ -80,29 +80,30 @@ def file_list():
     return render_template('file_list.html')
 
 
+def get_href(public_link):
+    """
+    Получение ссылки для скачивания
+    """
+    base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources/download?'
+    final_url = base_url + urlencode(dict(public_key=public_link))
+    response = requests.get(final_url)
+    parse_href = response.json()['href']
+    return parse_href
+
+
 @app.route('/download/<path:file_name>')
 async def download(file_name):
-    # Получаем public_key из сессии
     public_key = session.get('public_key')
     if not public_key:
         return "Публичный ключ не найден", 400
 
-    headers = {'Authorization': f'OAuth {TOKEN}'}
-    encoded_file_name = quote(file_name)  # Кодируем имя файла
-    url = f'https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key={public_key}&path={encoded_file_name}'
+    try:
+        download_url = get_href(public_key)
+        return redirect(download_url)
+    except Exception as e:
+        logging.error(f"Ошибка при получении ссылки для скачивания: {str(e)}")
+        return f"Ошибка при получении ссылки для скачивания: {str(e)}", 400
 
-    logging.info(f"Запрашиваем URL: {url} с токеном: {TOKEN}")
-
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers)
-
-        if response.status_code == 200:
-            download_url = response.json().get('href')
-            return redirect(download_url)
-        else:
-            logging.error(
-                f"Ошибка при получении ссылки для скачивания: {response.text}")
-            return f"Ошибка при получении ссылки для скачивания: {response.text}", 400
 
 
 
