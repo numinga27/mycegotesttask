@@ -57,6 +57,7 @@ def callback():
 
 @app.route('/files', methods=['GET', 'POST'])
 def file_list():
+    '''Метод file_list обрабатывает GET и POST запросы и фильтрация'''
     global file_cache
     if request.method == 'POST':
         if not TOKEN:
