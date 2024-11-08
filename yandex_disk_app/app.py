@@ -26,6 +26,8 @@ def auth():
 
 @app.route('/callback')
 def callback():
+    ''' Метод callback принимает код авторизации
+    от Yandex и обменивает его на токен доступа'''
     global TOKEN
     code = request.args.get('code')
 
@@ -51,24 +53,10 @@ def callback():
         return "Ошибка при получении токена", 400
 
 
-# @app.route('/files', methods=['GET', 'POST'])
-# def file_list():
-#     public_key = session.get('public_key')
-#     if not public_key or not TOKEN:
-#         return "Токен или публичный ключ не получены", 400
 
-#     headers = {'Authorization': f'OAuth {TOKEN}'}
-#     url = f'https://cloud-api.yandex.net/v1/disk/public/resources?public_key={public_key}'
-
-#     response = requests.get(url, headers=headers)
-
-#     if response.status_code == 200:
-#         files = response.json().get('_embedded', {}).get('items', [])
-#         return render_template('file_list.html', files=files)
-#     else:
-#         return f"Ошибка при получении файлов: {response.status_code}", 400
 @app.route('/files', methods=['GET', 'POST'])
 def file_list():
+    '''Метод file_list обрабатывает GET и POST запросы.'''
     if request.method == 'POST':
         if not TOKEN:
             return "Токен не получен", 400
@@ -93,9 +81,12 @@ def file_list():
 
     return render_template('file_list.html')
 
+
+
 def get_file_href(public_link, file_name):
     """
-    Получение ссылки для скачивания конкретного файла.
+    Функция get_file_href получает ссылку для скачивания
+    конкретного файла по публичному ключу и имени файла.
     """
     base_url = 'https://cloud-api.yandex.net/v1/disk/public/resources'
 
@@ -126,6 +117,8 @@ def get_file_href(public_link, file_name):
 
 @app.route('/download/<path:file_name>')
 def download(file_name):
+    '''Метод download использует функцию get_file_href для получения ссылки
+    на файл и перенаправляет пользователя на эту ссылку.'''
     public_key = session.get('public_key')
     if not public_key:
         return "Публичный ключ не найден", 400
