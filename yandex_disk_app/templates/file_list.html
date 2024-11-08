@@ -29,6 +29,12 @@
             width: 300px; 
             margin-right: 10px; 
         }
+        select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px; 
+        }
         button {
             padding: 10px 15px;
             background-color: #4a90e2; 
@@ -67,6 +73,16 @@
     <h1>Файлы по публичной ссылке</h1>
     <form action="" method="POST">
         <input type="text" name="public_key" required placeholder="Введите публичный ключ">
+        
+        <select name="file_type">
+            <option value="">Все файлы</option>
+            <option value="image/">Изображения</option>
+            <option value="application/pdf">Документы PDF</option>
+            <option value="application/msword">Документы Word</option>
+            <option value="application/vnd.openxmlformats-officedocument.wordprocessingml.document">Документы Word (xlsx)</option>
+            <!-- Добавьте другие типы файлов по необходимости -->
+        </select>
+        
         <button type="submit">Показать файлы</button>
     </form>
     <a href="http://127.0.0.1:5000" class="back-button">Назад</a>

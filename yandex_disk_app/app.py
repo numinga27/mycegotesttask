@@ -12,6 +12,7 @@ CLIENT_ID = '5866363715854fd0908bbb08fe690b88'  # Замените на ваш c
 CLIENT_SECRET = 'aa8baf12ccc947619ed55f821449e8a3'  # Замените на ваш client_secret
 REDIRECT_URI = 'http://localhost:5000/callback'
 TOKEN = None
+file_cache = {}  # Кэш для хранения списка файлов
 
 
 @app.route('/')
@@ -56,28 +57,36 @@ def callback():
 
 @app.route('/files', methods=['GET', 'POST'])
 def file_list():
-    '''Метод file_list обрабатывает GET и POST запросы.'''
+    global file_cache
     if request.method == 'POST':
         if not TOKEN:
             return "Токен не получен", 400
-
+        
         public_key = request.form.get('public_key')
         if not public_key:
             return "Публичный ключ не указан", 400
-
-        # Сохраняем public_key в сессии
+        
         session['public_key'] = public_key
-
         headers = {'Authorization': f'OAuth {TOKEN}'}
         url = f'https://cloud-api.yandex.net/v1/disk/public/resources?public_key={public_key}'
 
-        response = requests.get(url, headers=headers)
-
-        if response.status_code == 200:
-            files = response.json().get('_embedded', {}).get('items', [])
-            return render_template('file_list.html', files=files)
+        # Проверяем, есть ли кэшированные файлы
+        if public_key in file_cache:
+            files = file_cache[public_key]
         else:
-            return f"Ошибка при получении файлов: {response.status_code}", 400
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                files = response.json().get('_embedded', {}).get('items', [])
+                file_cache[public_key] = files  # Сохраняем в кэш
+            else:
+                return f"Ошибка при получении файлов: {response.status_code}", 400
+
+        # Фильтрация файлов по типу
+        file_type = request.form.get('file_type', '')  # Получаем тип файла из формы
+        if file_type:
+            files = [f for f in files if f.get('mime_type') and f['mime_type'].startswith(file_type)]
+
+        return render_template('file_list.html', files=files)
 
     return render_template('file_list.html')
 
